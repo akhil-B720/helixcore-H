@@ -4,5 +4,5 @@ numpy==1.26.4
 rdkit==2025.3.6
 Pillow
 requests
-openai
-flask-cors
+google-generativeai
+flask-cors==6.0.2
