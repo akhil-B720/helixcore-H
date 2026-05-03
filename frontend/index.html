@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HelixCore H</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="app-shell">
+    <header class="top-nav glass">
+      <div class="brand">HelixCore H</div>
+      <nav id="tabs" aria-label="Main sections">
+        <button class="nav-tab active" data-section="hero">Home</button>
+<button class="nav-tab" data-section="molecule">Molecules</button>
+<button class="nav-tab" data-section="organic">Organic</button>
+<section id="organic" class="section">
+  <div class="container">
+    <div class="section-title">ORGANIC CHEMISTRY</div>
+    <h2>Chirality & R/S Configuration</h2>
+
+    <div class="card">
+      <h3>Concept</h3>
+      <p>Chirality refers to non-superimposable mirror images (enantiomers).</p>
+    </div>
+
+    <div class="card">
+      <h3>Explanation</h3>
+      <p>R/S configuration is assigned using CIP priority rules...</p>
+    </div>
+
+    <div class="card">
+      <h3>Simulation</h3>
+      <p>Rotate molecule and assign R/S (coming soon)</p>
+    </div>
+  </div>
+</section>
+<button class="nav-tab" data-section="physical">Physical</button>
+<section id="physical" class="section">
+  <div class="container">
+    <div class="section-title">PHYSICAL CHEMISTRY</div>
+    <h2>Electrochemistry</h2>
+
+    <div class="card">
+      <h3>Concept</h3>
+      <p>Redox reactions involve transfer of electrons.</p>
+    </div>
+
+    <div class="card">
+      <h3>Simulation</h3>
+      <button onclick="runElectrochem()">Run Simulation</button>
+      <div id="electro-output"></div>
+    </div>
+  </div>
+</section>
+<button class="nav-tab" data-section="inorganic">Inorganic</button>
+<section id="inorganic" class="section">
+  <div class="container">
+    <div class="section-title">INORGANIC</div>
+    <h2>Crystal Field Theory</h2>
+
+    <div class="card">
+      <p>Octahedral splitting: t2g and eg orbitals</p>
+    </div>
+  </div>
+</section>
+<button class="nav-tab" data-section="materials">Materials</button>
+<section id="materials" class="section">
+  <div class="container">
+    <div class="section-title">MATERIALS SCIENCE</div>
+
+    <div class="card">
+      <h3>Polymers</h3>
+      <p>Macromolecules formed by repeating units :contentReference[oaicite:2]{index=2}</p>
+    </div>
+
+    <div class="card">
+      <h3>Mechanical Properties</h3>
+      <p>Stress, strain, elasticity relationships :contentReference[oaicite:3]{index=3}</p>
+    </div>
+  </div>
+</section>
+<button class="nav-tab" data-section="simulations">Simulations</button>
+<section id="simulations" class="section">
+  <div class="container">
+    <div class="section-title">SIMULATIONS</div>
+
+    <button onclick="runElectrochem()">Electrochemistry</button>
+    <button onclick="runPolymer()">Polymer Chain</button>
+
+    <div id="sim-output"></div>
+  </div>
+</section>
+<button class="nav-tab" data-section="quiz">Practice</button>
+      </nav>
+    </header>
+    <main id="content">
+      <section class="hero glass">
+        <div>
+          <h1>HelixCore H</h1>
+          <p>AI Chemistry Intelligence Platform</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <button id="chat-fab" title="Open Helix AI">AI</button>
+  <section id="chat-panel" class="glass hidden">
+    <div class="chat-header">
+      <h3>HelixCore Tutor</h3>
+      <button id="chat-close">x</button>
+    </div>
+    <div id="chat-messages"></div>
+    <div class="chat-input-row">
+      <input id="chat-input" placeholder="Ask chemistry or materials question..." />
+      <button id="chat-send">Send</button>
+    </div>
+  </section>
+
+  <footer class="glass footer">
+    <span>Powered by: OpenAI API - PubChem Database - Khan Academy (concept inspiration)</span>
+    <span>Built as HelixCore H</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+:root {
+  --bg: #080612;
+  --card: rgba(24, 16, 48, 0.6);
+  --edge: rgba(236, 147, 255, 0.38);
+  --txt: #f7eeff;
+  --muted: #d8c8f2;
+  --accent: #ca3cff;
+  --accent2: #25c2ff;
+  --glow: 0 0 18px rgba(202, 60, 255, 0.65);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--txt);
+  background: radial-gradient(circle at top, #0a0814, #02010a);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ================= NEON GRID ================= */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(202,60,255,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(202,60,255,0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: -2;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  from { transform: translateY(0px); }
+  to { transform: translateY(40px); }
+}
+
+/* ================= BACKGROUND ================= */
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.app-shell, .footer, #chat-panel, #chat-fab {
+  position: relative;
+  z-index: 2;
+}
+
+.app-shell {
+  padding: 1rem 1.5rem 5rem;
+}
+
+/* ================= GLASS ================= */
+
+.glass {
+  background: var(--card);
+  border: 1px solid var(--edge);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: var(--glow);
+}
+
+/* ================= NAVBAR ================= */
+
+.top-nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  position: sticky;
+  top: 10px;
+}
+
+.brand {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 12px #f099ff;
+}
+
+#tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+  backdrop-filter: blur(12px);
+  background: rgba(20, 10, 40, 0.6);
+  border-bottom: 1px solid rgba(202,60,255,0.2);
+}
+
+.tab-btn {
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.05);
+  color: var(--txt);
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tab-btn:hover,
+.tab-btn.active {
+  border-color: var(--accent2);
+  box-shadow: 0 0 12px rgba(37, 194, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+/* ================= CONTENT ================= */
+
+#content {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+/* ================= HERO ================= */
+
+.hero {
+  min-height: 56vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.hero h1 {
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  margin: 0;
+  text-shadow: 0 0 20px rgba(214, 125, 255, 0.95);
+}
+
+.hero p {
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+#hero-canvas {
+  width: 100%;
+  height: 300px;
+  display: block;
+  margin-top: 20px;
+}
+
+/* ================= GRID ================= */
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 0.9rem;
+}
+
+/* ================= CARD ================= */
+
+.card {
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(16, 12, 30, 0.7);
+}
+
+/* ================= INPUT ================= */
+
+input, select, button, textarea {
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.24);
+  background: rgba(12, 8, 26, 0.9);
+  color: var(--txt);
+  padding: 0.5rem 0.6rem;
+}
+
+button { cursor: pointer; }
+
+/* ================= MOLECULE ================= */
+
+#molecule-viewer {
+  width: 100%;
+  height: 300px;
+  border-radius: 12px;
+}
+
+.kv {
+  color: var(--muted);
+  margin: 0.25rem 0;
+}
+
+/* ================= SIM ================= */
+
+#sim-canvas {
+  width: 100%;
+  max-width: 900px;
+  height: 360px;
+  border-radius: 12px;
+}
+
+/* ================= CHAT ================= */
+
+#chat-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 1px solid var(--accent2);
+  background: linear-gradient(145deg, #f35bff, #4bc8ff);
+  color: #120720;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(76, 208, 255, 0.8);
+}
+
+#chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  width: min(360px, 90vw);
+  height: 460px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.7rem;
+}
+
+.hidden { display: none !important; }
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  margin-bottom: 0.5rem;
+}
+
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.bubble {
+  padding: 0.6rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+}
+
+.me { border: 1px solid rgba(37, 194, 255, 0.5); }
+.bot { border: 1px solid rgba(229, 120, 255, 0.5); }
+
+.chat-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input-row input {
+  flex: 1;
+}
+
+/* ================= AI CARD ================= */
+
+.ai-card {
+  background: rgba(20, 10, 40, 0.9);
+  border: 1px solid rgba(202, 60, 255, 0.4);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(202, 60, 255, 0.25);
+  animation: fadeIn 0.3s ease;
+}
+
+.ai-card h4 {
+  color: #ca3cff;
+  margin-top: 10px;
+}
+
+.ai-card p {
+  color: #e6dcff;
+}
+
+/* ================= ZIGGLE ================= */
+
+.ziggle {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.ziggle:hover {
+  animation: ziggleAnim 0.4s ease infinite alternate;
+}
+
+@keyframes ziggleAnim {
+  0% { transform: rotate(-2deg) scale(1.02); }
+  50% { transform: rotate(2deg) scale(1.04); }
+  100% { transform: rotate(0deg) scale(1.05); }
+}
+
+/* ================= ANIMATIONS ================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= FOOTER ================= */
+
+.footer {
+  margin: 0.9rem 1.5rem 1.2rem;
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 760px) {
+  .top-nav {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footer {
+    font-size: 0.8rem;
+  }
+}
