@@ -1,519 +1,302 @@
-console.log("JS LOADED");
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("UI READY");
 
-const API_BASE = "/api";
+  let currentMol = null;
+  let mol3DScene = null;
+  let mol3DRenderer = null;
+  let mol3DCamera = null;
+  let mol3DAnimId = null;
+  let mol3DGroup = null;
+  let molStyle = "stick";
+  let currentQ = null;
+  let quizPool = [];
 
-const TABS = [
-  "Home",
-  "Molecules",
-  "Organic Chemistry",
-  "Physical Chemistry",
-  "Inorganic Chemistry",
-  "Materials Science",
-  "Simulations",
-  "Practice",
-];
+  const QUESTIONS = [
+    { q: "What is the molecular formula of water?", opts: ["H2O", "HO2", "H2O2", "H3O"], ans: 0, exp: "Water is H2O." },
+    { q: "Hybridization of methane carbon is?", opts: ["sp", "sp2", "sp3", "sp3d"], ans: 2, exp: "Methane carbon is sp3." },
+    { q: "Which has highest electronegativity?", opts: ["O", "N", "F", "Cl"], ans: 2, exp: "Fluorine is highest." },
+  ];
 
-const TOPICS = {
-  "Organic Chemistry": ["Isomerism", "Chirality", "R/S Configuration", "Organic Reactions", "Polymerization"],
-  "Physical Chemistry": ["Thermodynamics", "Free Energy", "Electrochemistry", "Nernst Equation"],
-  "Inorganic Chemistry": ["Periodic Properties", "Chemical Bonding", "HSAB Principle", "Crystal Field Theory (CFT)", "Ligands"],
-  "Materials Science": ["Mechanical Properties", "Stress-Strain", "Elasticity", "XRD", "Miller Indices", "XPS"],
-};
-
-let activeTab = "Home";
-let activeTopic = "Electrochemistry";
-let moleculeRenderer;
-let simulationFrame;
-
-/* ================= UI ================= */
-
-function initHeroMoleculesOnce() {
-  if (window.__heroMolInit) return;
-  window.__heroMolInit = true;
-  setTimeout(initHeroMolecules, 100);
-}
-
-function initSectionNavigation() {
-  const navTabs = document.querySelectorAll(".nav-tab[data-section]");
-  const sections = document.querySelectorAll("#content .section");
-  if (!navTabs.length || !sections.length) return false;
-
-  function showSection(sectionId) {
-    sections.forEach((section) => {
-      section.style.display = section.id === sectionId ? "block" : "none";
-    });
-    navTabs.forEach((tab) => {
-      tab.classList.toggle("active", tab.dataset.section === sectionId);
-    });
-    if (sectionId === "hero") {
-      initHeroMoleculesOnce();
-    }
+  function showSection(id) {
+    document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+    const section = document.getElementById(id);
+    if (section) section.classList.add("active");
+    document.querySelectorAll(".nav-tab").forEach((t) => t.classList.remove("active"));
+    const tabMap = { hero: 0, molecule: 1, chat: 2, quiz: 3 };
+    document.querySelectorAll(".nav-tab")[tabMap[id]]?.classList.add("active");
+    if (id === "quiz" && !currentQ) newQuestion();
   }
-
-  navTabs.forEach((tab) => {
-    tab.addEventListener("click", () => showSection(tab.dataset.section));
-  });
-
-  const initial = document.querySelector(".nav-tab.active[data-section]")?.dataset.section
-    || navTabs[0].dataset.section;
-  showSection(initial);
   window.showSection = showSection;
-  return true;
-}
 
-function renderTabs() {
-  const tabsEl = document.getElementById("tabs");
-  if (!tabsEl) return;
-  tabsEl.innerHTML = "";
-  TABS.forEach((tab) => {
-    const btn = document.createElement("button");
-    btn.className = `tab-btn ${activeTab === tab ? "active" : ""}`;
-    btn.innerHTML = tab.split("").map(l => `<span class="ziggle">${l}</span>`).join("");
-    btn.onclick = () => {
-      activeTab = tab;
-      renderTabs();
-      renderTabContent();
+  function triggerBurst(e) {
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement("div");
+      p.style.cssText = "position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:999;background:#c084fc";
+      p.style.left = `${e.clientX}px`;
+      p.style.top = `${e.clientY}px`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 450);
+    }
+  }
+  window.triggerBurst = triggerBurst;
+
+  function buildTitle() {
+    const words = ["Chem", "Explorer", "H"];
+    const ids = ["word1", "word2", "word3"];
+    words.forEach((word, wi) => {
+      const host = document.getElementById(ids[wi]);
+      if (!host) return;
+      [...word].forEach((ch) => {
+        const span = document.createElement("span");
+        span.className = "letter";
+        span.textContent = ch;
+        span.addEventListener("mouseenter", () => {
+          span.classList.add("jiggle");
+          setTimeout(() => span.classList.remove("jiggle"), 400);
+        });
+        host.appendChild(span);
+      });
+    });
+  }
+  buildTitle();
+
+  (function initBgCanvas() {
+    const canvas = document.getElementById("bg-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let w = 0;
+    let h = 0;
+    const particles = Array.from({ length: 24 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+    }));
+    const resize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
     };
-    tabsEl.appendChild(btn);
-  });
-}
+    window.addEventListener("resize", resize);
+    resize();
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+        ctx.fillStyle = "rgba(192,132,252,0.35)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    };
+    draw();
+  })();
 
-function setContent(html) {
-  const contentEl = document.getElementById("content");
-  if (!contentEl) return;
-  contentEl.innerHTML = html;
-}
+  async function analyzeMolecule() {
+    const inputEl = document.getElementById("mol-input");
+    const out = document.getElementById("mol-result");
+    if (!inputEl || !out) return;
+    const input = inputEl.value.trim();
+    if (!input) return;
+    out.innerHTML = "Analyzing...";
 
-/* ================= HOME (NEW) ================= */
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: input, smiles: input }),
+      });
+      const data = await res.json();
+      const d = data.data || data;
 
-function renderHome() {
-  setContent(`
-    <section class="hero glass">
-      <div>
-        <h1>HelixCore H</h1>
-        <p>AI Chemistry Intelligence Platform</p>
-      </div>
-      <canvas id="hero-canvas"></canvas>
-    </section>
-  `);
-
-  setTimeout(initHeroMolecules, 100);
-}
-
-function initHeroMolecules() {
-  const canvas = document.getElementById("hero-canvas");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  canvas.width = window.innerWidth;
-  canvas.height = 300;
-
-  const particles = Array.from({ length: 40 }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    vx: (Math.random() - 0.5) * 1.2,
-    vy: (Math.random() - 0.5) * 1.2,
-    r: 2 + Math.random() * 3,
-  }));
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-
-      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = "#ca3cff";
-      ctx.fill();
-    });
-
-    requestAnimationFrame(draw);
-  }
-
-  draw();
-}
-
-/* ================= API ================= */
-
-async function api(path, options = {}) {
-  try {
-    const response = await fetch(`${API_BASE}${path}`, {
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) throw new Error(data.error || "API error");
-    return data;
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-}
-
-/* ================= CHATBOT ================= */
-
-async function sendChat() {
-  const input = document.getElementById("chat-input");
-  const messages = document.getElementById("chat-messages");
-  if (!input || !messages) return;
-
-  const userMessage = input.value.trim();
-  if (!userMessage) return;
-
-  input.value = "";
-
-  const userBubble = document.createElement("div");
-  userBubble.className = "bubble me";
-  userBubble.textContent = userMessage;
-  messages.appendChild(userBubble);
-
-  const loading = document.createElement("div");
-  loading.className = "bubble bot";
-  loading.textContent = "Thinking...";
-  messages.appendChild(loading);
-  messages.scrollTop = messages.scrollHeight;
-
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMessage })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to get chat response");
-
-    const d = data.data || data.response || data;
-    const html = `
-      <div class="ai-card">
-        <h4>Concept</h4><p>${d.concept || ""}</p>
-        <h4>Explanation</h4><p>${d.explanation || ""}</p>
-        <h4>Visualization</h4><p>${d.visualization || ""}</p>
-        <h4>Example</h4><p>${d.example || ""}</p>
-        <h4>Application</h4><p>${d.application || ""}</p>
-      </div>
-    `;
-    typeText(loading, html);
-  } catch (e) {
-    console.error(e);
-    loading.textContent = e.message || "Chat request failed";
-  }
-}
-
-async function analyzeMolecule() {
-  const inputEl = document.getElementById("molecule-input") || document.getElementById("molecule-name");
-  const resultEl = document.getElementById("molecule-result") || document.getElementById("molecule-output");
-  if (!inputEl || !resultEl) return;
-
-  const input = inputEl.value.trim();
-  if (!input) return;
-
-  resultEl.innerHTML = "<p>Analyzing molecule...</p>";
-
-  try {
-    const res = await fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: input,
-        smiles: input
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to analyze molecule");
-
-    const d = data.data || data.result || data;
-    const formula = d.molecular_formula || d.formula || "N/A";
-    const weight = d.molecular_weight ?? d.weight ?? "N/A";
-    const smiles = d.smiles || input;
-    const props = { ...(d.properties || {}) };
-    if (Array.isArray(d.functional_groups) && d.functional_groups.length) {
-      props["Functional groups"] = d.functional_groups.join(", ");
-    }
-    if (Array.isArray(d.chirality_centers) && d.chirality_centers.length) {
-      props["Chirality centers"] = String(d.chirality_centers.length);
-    }
-    if (d.stereochemistry_info) {
-      props["Stereochemistry"] = d.stereochemistry_info;
-    }
-    const propItems = Object.entries(props)
-      .map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`)
-      .join("");
-
-    resultEl.innerHTML = `
-      <div class="card">
-        <h3>${d.name || input}</h3>
-        <p><strong>Formula:</strong> ${formula}</p>
-        <p><strong>Weight:</strong> ${weight}</p>
-        <p><strong>SMILES:</strong> ${smiles}</p>
-        <ul>${propItems || "<li>No properties available</li>"}</ul>
-      </div>
-    `;
-  } catch (e) {
-    console.error(e);
-    resultEl.innerHTML = `<p>${e.message || "Molecule analysis failed"}</p>`;
-  }
-}
-
-window.sendChat = sendChat;
-window.analyzeMolecule = analyzeMolecule;
-
-function initChatFAB() {
-  const fab = document.getElementById("chat-fab");
-  const panel = document.getElementById("chat-panel");
-  const close = document.getElementById("chat-close");
-  if (!fab || !panel) return;
-  fab.addEventListener("click", () => panel.classList.toggle("hidden"));
-  if (close) {
-    close.addEventListener("click", () => panel.classList.add("hidden"));
-  }
-}
-
-async function explainTopic() {
-  const topicInput = document.getElementById("topic-input");
-  const resultEl = document.getElementById("topic-result");
-  if (!topicInput || !resultEl) return;
-
-  const topic = topicInput.value.trim();
-  if (!topic) return;
-
-  resultEl.innerHTML = "<p>Loading explanation...</p>";
-
-  try {
-    const res = await fetch("/api/topic/explain", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic })
-    });
-    const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || "Topic request failed");
-
-    resultEl.innerHTML = `
-      <div class="ai-card card">
-        <h4>Concept</h4><p>${data.concept || ""}</p>
-        <h4>Explanation</h4><p>${data.explanation || ""}</p>
-        <h4>Visualization</h4><p>${data.visualization || ""}</p>
-        <h4>Example</h4><p>${data.example || ""}</p>
-        <h4>Application</h4><p>${data.application || ""}</p>
-      </div>
-    `;
-  } catch (e) {
-    console.error(e);
-    resultEl.innerHTML = `<p>${e.message || "Topic explain failed"}</p>`;
-  }
-}
-
-window.explainTopic = explainTopic;
-
-function initTopicExplain() {
-  const btn = document.getElementById("topic-explain-btn");
-  const input = document.getElementById("topic-input");
-  if (!btn || !input) return;
-  btn.addEventListener("click", explainTopic);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") explainTopic();
-  });
-}
-
-function runElectrochem() {
-  const el = document.getElementById("electro-output") || document.getElementById("sim-output");
-  if (el) el.innerHTML = "<p><em>Simulation UI placeholder — visuals unchanged.</em></p>";
-}
-
-function runPolymer() {
-  const el = document.getElementById("sim-output");
-  if (el) el.innerHTML = "<p><em>Polymer chain placeholder — visuals unchanged.</em></p>";
-}
-
-window.runElectrochem = runElectrochem;
-window.runPolymer = runPolymer;
-
-function initChatbot() {
-  const send = document.getElementById("chat-send");
-  const input = document.getElementById("chat-input");
-  if (!send || !input) return;
-
-  send.onclick = sendChat;
-
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") sendChat();
-  });
-}
-
-/* ================= TYPE EFFECT ================= */
-
-function typeText(element, html) {
-  element.innerHTML = "";
-  let i = 0;
-
-  function type() {
-    if (i < html.length) {
-      element.innerHTML += html.charAt(i);
-      i++;
-      setTimeout(type, 5);
+      out.innerHTML = `
+        Name: ${d.name || input}<br>
+        Formula: ${d.formula || d.molecular_formula || "N/A"}<br>
+        Weight: ${d.weight || d.molecular_weight || "N/A"}<br>
+        SMILES: ${d.smiles || input}
+      `;
+      currentMol = { smiles: d.smiles || input };
+      render3DMol(currentMol);
+    } catch (e) {
+      console.error(e);
+      out.innerHTML = `Error: ${e.message}`;
     }
   }
+  window.analyzeMolecule = analyzeMolecule;
 
-  type();
-}
+  async function sendChat() {
+    const inputEl = document.getElementById("chat-input");
+    const box = document.getElementById("chat-messages");
+    if (!inputEl || !box) return;
+    const userMessage = inputEl.value.trim();
+    if (!userMessage) return;
+    inputEl.value = "";
 
-/* ================= TAB CONTENT ================= */
-
-function renderTabContent() {
-  const contentRoot = document.getElementById("content");
-  if (contentRoot?.querySelector(".section")) return;
-
-  if (activeTab === "Home") {
-    renderHome();
-  } else if (activeTab === "Molecules") {
-    setContent(`
-      <section class="glass">
-        <div class="container">
-          <div class="section-title">MOLECULE ANALYZER</div>
-          <h2>Analyze a compound</h2>
-          <div class="card">
-            <p class="kv">Enter a common name or SMILES string.</p>
-            <input id="molecule-input" type="text" placeholder="Name or SMILES" />
-            <button type="button" id="analyze-btn">Analyze</button>
-            <div id="molecule-result" style="margin-top: 1rem;"></div>
+    box.innerHTML += `<div class="msg user"><div class="msg-avatar">👤</div><div class="msg-bubble">${userMessage}</div></div>`;
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage }),
+      });
+      const data = await res.json();
+      const d = data.data || data;
+      box.innerHTML += `
+        <div class="msg ai">
+          <div class="msg-avatar">⚗</div>
+          <div class="msg-bubble">
+            <strong>Concept:</strong> ${d.concept || ""}<br>
+            <strong>Explanation:</strong> ${d.explanation || ""}<br>
+            <strong>Visualization:</strong> ${d.visualization || ""}<br>
+            <strong>Example:</strong> ${d.example || ""}<br>
+            <strong>Application:</strong> ${d.application || ""}
           </div>
-        </div>
-      </section>
-    `);
-    initMoleculeAnalyzer();
-  } else if (activeTab === "Simulations") {
-    setContent(`
-      <section class="glass">
-        <div class="container">
-          <div class="section-title">SIMULATIONS</div>
-          <button type="button" onclick="runElectrochem()">Electrochemistry</button>
-          <button type="button" onclick="runPolymer()">Polymer Chain</button>
-          <div id="sim-output"></div>
-        </div>
-      </section>
-    `);
-  } else if (activeTab === "Practice") {
-    setContent(`
-      <section class="glass">
-        <div class="container">
-          <div class="section-title">PRACTICE</div>
-          <h2>Topic deep-dive</h2>
-          <div class="card">
-            <input id="topic-input" type="text" placeholder="Topic" />
-            <button type="button" id="topic-explain-btn">Explain topic</button>
-            <div id="topic-result" style="margin-top: 1rem;"></div>
-          </div>
-        </div>
-      </section>
-    `);
-    initTopicExplain();
-  } else {
-    const topicSeed = TOPICS[activeTab]?.[0];
-    let extra = "";
-    if (topicSeed) {
-      extra = `
-        <div class="card">
-          <h3>Explain with AI</h3>
-          <p><button type="button" id="explain-seed-topic" data-topic="${topicSeed}">Explain: ${topicSeed}</button></p>
-          <div id="subject-topic-result"></div>
         </div>
       `;
+      box.scrollTop = box.scrollHeight;
+    } catch (e) {
+      console.error(e);
     }
-    setContent(`
-      <div class="card"><h3>${activeTab}</h3></div>
-      ${extra}
-    `);
-    const seedBtn = document.getElementById("explain-seed-topic");
-    if (seedBtn) {
-      seedBtn.addEventListener("click", async () => {
-        const t = seedBtn.getAttribute("data-topic");
-        const out = document.getElementById("subject-topic-result");
-        if (!out || !t) return;
-        out.innerHTML = "<p>Loading...</p>";
-        try {
-          const res = await fetch("/api/topic/explain", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic: t })
-          });
-          const data = await res.json();
-          if (!res.ok || !data.ok) throw new Error(data.error || "Failed");
-          out.innerHTML = `<div class="ai-card"><p>${data.explanation || ""}</p></div>`;
-        } catch (e) {
-          console.error(e);
-          out.innerHTML = `<p>${e.message}</p>`;
-        }
+  }
+  window.sendChat = sendChat;
+
+  async function explainTopic() {
+    const inputEl = document.getElementById("topic-input");
+    const out = document.getElementById("topic-result");
+    if (!inputEl || !out) return;
+    const topic = inputEl.value.trim();
+    if (!topic) return;
+    out.innerHTML = "Loading...";
+    try {
+      const res = await fetch("/api/topic/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic }),
+      });
+      const data = await res.json();
+      out.innerHTML = `
+        <strong>Concept:</strong> ${data.concept || ""}<br>
+        <strong>Explanation:</strong> ${data.explanation || ""}<br>
+        <strong>Visualization:</strong> ${data.visualization || ""}<br>
+        <strong>Example:</strong> ${data.example || ""}<br>
+        <strong>Application:</strong> ${data.application || ""}
+      `;
+    } catch (e) {
+      console.error(e);
+      out.innerHTML = `Error: ${e.message}`;
+    }
+  }
+  window.explainTopic = explainTopic;
+
+  function handleChatKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendChat();
+    }
+  }
+  window.handleChatKey = handleChatKey;
+
+  function autoResize(el) {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }
+  window.autoResize = autoResize;
+
+  function parseSmiles(smiles) {
+    const elems = [];
+    const rx = /([A-Z][a-z]?)/g;
+    let m;
+    while ((m = rx.exec(smiles)) !== null) elems.push(m[1]);
+    const atoms = [];
+    for (let i = 0; i < Math.min(elems.length, 30); i++) {
+      atoms.push({
+        element: elems[i],
+        x: Math.cos(i) * (2 + i * 0.07),
+        y: Math.sin(i) * (2 + i * 0.07),
+        z: (i % 6) * 0.2,
       });
     }
+    return atoms;
   }
-}
 
-function initMoleculeAnalyzer() {
-  const analyzeBtn = document.getElementById("analyze-btn") || document.getElementById("molecule-analyze");
-  if (!analyzeBtn) return;
-  analyzeBtn.addEventListener("click", analyzeMolecule);
-}
-/* ================= PARALLAX (SMOOTH) ================= */
+  function render3DMol(mol) {
+    const canvas = document.getElementById("mol-3d-canvas");
+    const container = document.getElementById("mol-3d-viewer");
+    const placeholder = document.getElementById("viewer-placeholder");
+    const styleBtns = document.getElementById("style-btns");
+    if (!canvas || !container || !window.THREE) return;
+    if (placeholder) placeholder.style.display = "none";
+    if (styleBtns) styleBtns.style.display = "flex";
+    if (mol3DAnimId) cancelAnimationFrame(mol3DAnimId);
 
-(function initParallax() {
-  let targetX = 0;
-  let targetY = 0;
-  let currentX = 0;
-  let currentY = 0;
+    mol3DScene = new THREE.Scene();
+    mol3DCamera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+    mol3DCamera.position.z = 8;
+    mol3DRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    mol3DRenderer.setSize(container.clientWidth, container.clientHeight);
+    mol3DScene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-  window.addEventListener("mousemove", (e) => {
-    targetX = (e.clientX / window.innerWidth - 0.5) * 6;
-    targetY = (e.clientY / window.innerHeight - 0.5) * 6;
+    mol3DGroup = new THREE.Group();
+    const atoms = parseSmiles(mol.smiles || "CCO");
+    atoms.forEach((a) => {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(molStyle === "sphere" ? 0.35 : 0.2, 10, 10), new THREE.MeshPhongMaterial({ color: 0xc084fc }));
+      mesh.position.set(a.x, a.y, a.z);
+      mol3DGroup.add(mesh);
+    });
+    mol3DScene.add(mol3DGroup);
+    const animate = () => {
+      mol3DAnimId = requestAnimationFrame(animate);
+      if (mol3DGroup) mol3DGroup.rotation.y += 0.005;
+      mol3DRenderer.render(mol3DScene, mol3DCamera);
+    };
+    animate();
+  }
+
+  function setStyle(style) {
+    molStyle = style;
+    if (currentMol) render3DMol(currentMol);
+  }
+  window.setStyle = setStyle;
+
+  function resetCamera() {
+    if (mol3DCamera) mol3DCamera.position.set(0, 0, 8);
+    if (mol3DGroup) mol3DGroup.rotation.set(0, 0, 0);
+  }
+  window.resetCamera = resetCamera;
+
+  function renderQuestion(q) {
+    const area = document.getElementById("quiz-area");
+    if (!area) return;
+    const opts = q.opts.map((o, i) => `<button class="option" onclick="answerQuestion(${i})">${String.fromCharCode(65 + i)}. ${o}</button>`).join("");
+    area.innerHTML = `<div class="card"><div style="margin-bottom:12px;">${q.q}</div>${opts}<div id="q-exp" style="margin-top:12px;color:var(--text-dim);"></div></div>`;
+  }
+
+  function newQuestion() {
+    if (!quizPool.length) quizPool = [...QUESTIONS];
+    currentQ = quizPool.pop();
+    renderQuestion(currentQ);
+  }
+
+  function answerQuestion(idx) {
+    if (!currentQ) return;
+    const exp = document.getElementById("q-exp");
+    if (!exp) return;
+    exp.textContent = `${idx === currentQ.ans ? "Correct." : "Incorrect."} ${currentQ.exp}`;
+    setTimeout(newQuestion, 1500);
+  }
+  window.answerQuestion = answerQuestion;
+
+  document.getElementById("mol-input")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") analyzeMolecule();
+  });
+  document.getElementById("chat-input")?.addEventListener("keydown", handleChatKey);
+  document.getElementById("topic-input")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") explainTopic();
   });
 
-  function animate() {
-    // smooth interpolation (lerp)
-    currentX += (targetX - currentX) * 0.08;
-    currentY += (targetY - currentY) * 0.08;
-
-    document.body.style.transform = `
-      perspective(1000px)
-      rotateX(${-currentY}deg)
-      rotateY(${currentX}deg)
-    `;
-
-    requestAnimationFrame(animate);
-  }
-
-  animate();
-})();
-
-/* ================= INIT ================= */
-
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("APP STARTED");
-
-  try {
-    const contentEl = document.getElementById("content");
-    const hasSectionUI = !!(contentEl && contentEl.querySelector(".section"));
-
-    if (hasSectionUI) {
-      initSectionNavigation?.();
-      initChatFAB?.();
-      initMoleculeAnalyzer?.();
-      initTopicExplain?.();
-      initChatbot?.();
-    } else {
-      renderTabs?.();
-      renderTabContent?.();
-      initChatFAB?.();
-      initMoleculeAnalyzer?.();
-      initTopicExplain?.();
-      initChatbot?.();
-    }
-  } catch (e) {
-    console.error("INIT ERROR:", e);
-  }
+  quizPool = [...QUESTIONS];
+  newQuestion();
 });

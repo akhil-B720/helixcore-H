@@ -5,11 +5,8 @@ from pathlib import Path
 
 from backend.routes.topic import topic_bp
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-
-# ❌ REMOVED api_bp (causing route conflict)
-# from backend.routes.api import api_bp
 
 from backend.routes.analysis import analysis_bp
 from backend.routes.chat import chat_bp
@@ -23,9 +20,6 @@ def create_app() -> Flask:
     CORS(app)
 
     # ===== REGISTER BLUEPRINTS =====
-    # ❌ REMOVED this line (causing /api/chat not found)
-    # app.register_blueprint(api_bp)
-
     app.register_blueprint(analysis_bp, url_prefix="/api")
     app.register_blueprint(chat_bp, url_prefix="/api")
     app.register_blueprint(topic_bp, url_prefix="/api")

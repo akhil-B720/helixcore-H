@@ -1,162 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HelixCore H</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chem Explorer H</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <canvas id="bg-canvas"></canvas>
-  <div class="app-shell">
-    <header class="top-nav glass">
-      <div class="brand">HelixCore H</div>
-      <nav id="tabs" aria-label="Main sections">
-        <button class="nav-tab tab-btn active" data-section="hero">Home</button>
-        <button class="nav-tab tab-btn" data-section="molecule">Molecules</button>
-        <button class="nav-tab tab-btn" data-section="organic">Organic</button>
-        <button class="nav-tab tab-btn" data-section="physical">Physical</button>
-        <button class="nav-tab tab-btn" data-section="inorganic">Inorganic</button>
-        <button class="nav-tab tab-btn" data-section="materials">Materials</button>
-        <button class="nav-tab tab-btn" data-section="simulations">Simulations</button>
-        <button class="nav-tab tab-btn" data-section="quiz">Practice</button>
-      </nav>
-    </header>
+  <div class="bg-overlay"></div>
 
-    <main id="content">
-      <section id="hero" class="section glass hero">
-        <div>
-          <h1>HelixCore H</h1>
-          <p>AI Chemistry Intelligence Platform</p>
-        </div>
-        <canvas id="hero-canvas"></canvas>
-      </section>
+  <nav>
+    <div class="nav-logo">⬡ CEH</div>
+    <button class="nav-tab active" onclick="showSection('hero')">Home</button>
+    <button class="nav-tab" onclick="showSection('molecule')">Molecule</button>
+    <button class="nav-tab" onclick="showSection('chat')">AI Tutor</button>
+    <button class="nav-tab" onclick="showSection('quiz')">Quiz</button>
+  </nav>
 
-      <section id="molecule" class="section glass">
-        <div class="container">
-          <div class="section-title">MOLECULE ANALYZER</div>
-          <h2>Analyze a compound</h2>
-          <div class="card">
-            <p class="kv">Enter a common name or SMILES string.</p>
-            <input id="molecule-input" type="text" placeholder="e.g. caffeine or CC(=O)OC1=CC=CC=C1C(=O)O" />
-            <button type="button" id="analyze-btn">Analyze</button>
-            <div id="molecule-result" style="margin-top: 1rem;"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="organic" class="section">
-        <div class="container">
-          <div class="section-title">ORGANIC CHEMISTRY</div>
-          <h2>Chirality & R/S Configuration</h2>
-
-          <div class="card">
-            <h3>Concept</h3>
-            <p>Chirality refers to non-superimposable mirror images (enantiomers).</p>
-          </div>
-
-          <div class="card">
-            <h3>Explanation</h3>
-            <p>R/S configuration is assigned using CIP priority rules...</p>
-          </div>
-
-          <div class="card">
-            <h3>Simulation</h3>
-            <p>Rotate molecule and assign R/S (coming soon)</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="physical" class="section">
-        <div class="container">
-          <div class="section-title">PHYSICAL CHEMISTRY</div>
-          <h2>Electrochemistry</h2>
-
-          <div class="card">
-            <h3>Concept</h3>
-            <p>Redox reactions involve transfer of electrons.</p>
-          </div>
-
-          <div class="card">
-            <h3>Simulation</h3>
-            <button type="button" onclick="runElectrochem()">Run Simulation</button>
-            <div id="electro-output"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="inorganic" class="section">
-        <div class="container">
-          <div class="section-title">INORGANIC</div>
-          <h2>Crystal Field Theory</h2>
-
-          <div class="card">
-            <p>Octahedral splitting: t2g and eg orbitals</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="materials" class="section">
-        <div class="container">
-          <div class="section-title">MATERIALS SCIENCE</div>
-
-          <div class="card">
-            <h3>Polymers</h3>
-            <p>Macromolecules formed by repeating units.</p>
-          </div>
-
-          <div class="card">
-            <h3>Mechanical Properties</h3>
-            <p>Stress, strain, elasticity relationships.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="simulations" class="section">
-        <div class="container">
-          <div class="section-title">SIMULATIONS</div>
-
-          <button type="button" onclick="runElectrochem()">Electrochemistry</button>
-          <button type="button" onclick="runPolymer()">Polymer Chain</button>
-
-          <div id="sim-output"></div>
-        </div>
-      </section>
-
-      <section id="quiz" class="section">
-        <div class="container">
-          <div class="section-title">PRACTICE</div>
-          <h2>Topic deep-dive</h2>
-          <div class="card">
-            <p class="kv">Ask for an AI-guided explanation for any chemistry topic.</p>
-            <input id="topic-input" type="text" placeholder="e.g. Electrochemistry" />
-            <button type="button" id="topic-explain-btn">Explain topic</button>
-            <div id="topic-result" style="margin-top: 1rem;"></div>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <button type="button" id="chat-fab" title="Open Helix AI">AI</button>
-  <section id="chat-panel" class="glass hidden">
-    <div class="chat-header">
-      <h3>HelixCore Tutor</h3>
-      <button type="button" id="chat-close">x</button>
-    </div>
-    <div id="chat-messages"></div>
-    <div class="chat-input-row">
-      <input id="chat-input" placeholder="Ask chemistry or materials question..." />
-      <button type="button" id="chat-send">Send</button>
+  <section id="hero" class="section active">
+    <canvas id="orbital-canvas"></canvas>
+    <div class="hero-content">
+      <div class="hero-title" id="hero-title">
+        <div class="title-word" id="word1"></div>
+        <div class="title-word" id="word2"></div>
+        <div class="title-word" id="word3"></div>
+      </div>
+      <div class="hero-sub">Advanced Chemistry Platform</div>
+      <div class="hero-badges">
+        <div class="badge">Molecular Analysis</div>
+        <div class="badge">3D Visualization</div>
+        <div class="badge">AI Tutor</div>
+        <div class="badge">Interactive Quiz</div>
+      </div>
+      <button class="cta-btn" onclick="showSection('molecule'); triggerBurst(event)">Explore Molecules →</button>
     </div>
   </section>
 
-  <footer class="glass footer">
-    <span>Powered by: OpenAI API - PubChem Database - Khan Academy (concept inspiration)</span>
-    <span>Built as HelixCore H</span>
-  </footer>
+  <section id="molecule" class="section">
+    <div class="container">
+      <div class="section-title">⬡ MOLECULAR INTELLIGENCE</div>
+      <div class="section-heading">Molecule Analysis</div>
+      <div class="input-group">
+        <input class="mol-input" id="mol-input" placeholder="glucose, caffeine, dopamine, or SMILES…" />
+        <button class="btn-primary" onclick="analyzeMolecule()">Analyze</button>
+      </div>
+      <div class="mol-grid">
+        <div class="card">
+          <div class="mol-result" id="mol-result">Enter a molecule to analyze.</div>
+          <div id="chirality-info"></div>
+        </div>
+        <div class="card">
+          <div id="mol-3d-viewer">
+            <canvas id="mol-3d-canvas"></canvas>
+            <div class="viewer-placeholder" id="viewer-placeholder">ANALYZE A MOLECULE</div>
+          </div>
+          <div class="style-btns" id="style-btns" style="display:none;">
+            <button class="btn-secondary active" onclick="setStyle('stick')">Stick</button>
+            <button class="btn-secondary" onclick="setStyle('ballstick')">Ball & Stick</button>
+            <button class="btn-secondary" onclick="setStyle('sphere')">Sphere</button>
+            <button class="btn-secondary" onclick="resetCamera()">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+  <section id="chat" class="section">
+    <div class="container">
+      <div class="section-title">⬡ AI TUTOR</div>
+      <div class="section-heading">Chem Explorer H AI</div>
+      <div class="card chat-container">
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg ai">
+            <div class="msg-avatar">⚗</div>
+            <div class="msg-bubble">Hi! Ask chemistry questions and I will explain concept, explanation, visualization, example, and application.</div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask anything about chemistry…" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn-primary" onclick="sendChat()" id="send-btn">Send</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz" class="section">
+    <div class="container">
+      <div class="section-title">⬡ TOPIC EXPLAINER</div>
+      <div class="section-heading">Topic Explanation + Quiz</div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="input-group">
+          <input class="mol-input" id="topic-input" placeholder="Enter topic e.g. electrochemistry" />
+          <button class="btn-primary" onclick="explainTopic()">Explain</button>
+        </div>
+        <div id="topic-result" class="mol-result">Enter a topic to get structured explanation.</div>
+      </div>
+      <div id="quiz-area"></div>
+    </div>
+  </section>
+
   <script src="/app.js"></script>
 </body>
 </html>
