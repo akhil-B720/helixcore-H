@@ -97,6 +97,14 @@ body::before {
   border-bottom: 1px solid rgba(202,60,255,0.2);
 }
 
+.section-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0.5rem;
+}
+
 .tab-btn {
   border: 1px solid transparent;
   background: rgba(255,255,255,0.05);

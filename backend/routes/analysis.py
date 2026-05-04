@@ -27,6 +27,12 @@ def analyze():
             "data": result
         })
 
+    except ValueError as e:
+        return jsonify({
+            "ok": False,
+            "error": str(e)
+        }), 400
+
     except Exception as e:
         return jsonify({
             "ok": False,

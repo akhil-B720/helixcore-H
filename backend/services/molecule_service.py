@@ -115,6 +115,11 @@ def analyze_molecule(name: str | None, smiles: str | None) -> MoleculeAnalysisRe
     final_smiles = (smiles or "").strip()
     final_name = (name or "").strip() or None
 
+    # If UI sends the same string for both name and smiles (common UX pattern),
+    # treat it as a name unless it is an actual SMILES.
+    if final_name and final_smiles and final_name == final_smiles:
+        final_smiles = ""
+
     # 🔥 FIXED: CORRECTLY INSIDE FUNCTION
     if not final_smiles and final_name:
         final_smiles = _resolve_smiles_from_name(final_name) or ""
@@ -174,6 +179,8 @@ class MoleculeService:
         result = analyze_molecule(name, smiles).to_dict()
 
         return {
+            "name": result["name"],
+            "smiles": result["smiles"],
             "formula": result["molecular_formula"],
             "weight": result["molecular_weight"],
             "functional_groups": result["functional_groups"],
