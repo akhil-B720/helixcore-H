@@ -39,12 +39,8 @@ def create_app() -> Flask:
     def index():
         return send_from_directory(app.static_folder, "index.html")
 
-    @app.get("/")
-    def index_alt():
-        return send_from_directory(app.static_folder, "index.html")
-
-    @app.get("/<path:path>")
-    def static_proxy(path: str):
+    @app.route("/<path:path>")
+    def static_files(path: str):
         full = os.path.join(app.static_folder, path)
         if os.path.exists(full):
             return send_from_directory(app.static_folder, path)
